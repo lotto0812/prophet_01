@@ -1,170 +1,84 @@
-# レストランカテゴリ別売上予測モデル（Prophet）
+# 飲食店売上予測プロジェクト（Prophet & RandomForest）
 
-このプロジェクトは、Facebook Prophetを使用してレストランのカテゴリ別売上予測モデルを構築するものです。
+## 概要
+本プロジェクトは、飲食店の月次売上データをもとに、ProphetおよびRandomForestを用いて将来12ヶ月分の売上を予測するPythonスクリプト集です。カテゴリ別・店舗別の両方で予測が可能で、特徴量の自動スケーリングやハイパーパラメータチューニングも実装されています。
 
-## 📊 概要
+## 特徴
+- **Prophet/RandomForestによる売上予測**（カテゴリ別・店舗別）
+- **特徴量スケーリング・ハイパーパラメータ自動探索**（RandomForest）
+- **ラグ特徴量自動生成**（RandomForest）
+- **予測結果・特徴量重要度・散布図の自動保存**
+- **柔軟なカスタマイズ**
 
-- **目的**: レストランのカテゴリ別月間売上を予測
-- **手法**: Facebook Prophet（時系列予測）
-- **特徴**: 季節性、トレンド、外部要因を考慮した予測
-- **対象カテゴリ**: イタリアン、中華、和食、フレンチ、カフェ
+## 必要環境・依存パッケージ
+- Python 3.8 以上推奨
+- 必要パッケージは `requirements.txt` で管理しています。
 
-## 🗂️ ファイル構成
-
-```
-timeSeriesAnalysis_prophet_simple/
-├── requirements.txt              # 必要なライブラリ
-├── generate_sample_data.py       # サンプルデータ生成
-├── data_analysis.py             # データ分析・可視化
-├── prophet_sales_forecast.py    # メイン予測モデル
-├── font_setup.py                # 日本語フォント設定
-├── run_all.py                   # 統合実行スクリプト
-├── README.md                    # このファイル
-└── restaurant_sales_data.csv    # 生成されるデータファイル
-```
-
-## 📈 データ構造
-
-### 入力特徴量
-- `YEAR`: 年
-- `MONTH`: 月
-- `AVG_MONTHLY_POPULATION`: 月ごとの人流の平均
-- `RATING_SCORE`: 食べログのレーティングスコア
-- `RATING_CNT`: 食べログのレーティング数
-- `NUM_SEATS`: 席数
-- `NEAREST_STATION_INFO`: 最寄り駅情報
-
-### 予測対象
-- `target_amount`: 月ごとの売上（万円）
-
-## 🚀 クイックスタート
-
-### 1. 環境構築
-
+インストール例：
 ```bash
-# 必要なライブラリをインストール
 pip install -r requirements.txt
 ```
 
-### 2. 全処理の一括実行
+## データ構造と前提
+- 入力データ: `restaurant_sales_data.csv`
+    - 店舗ID（sakaya_dealer_cd）、カテゴリ（CUISINE_CAT_1）、年月（YEAR, MONTH）、売上（target_amount）などのカラムを含む
+    - サンプルデータ生成スクリプトも同梱（`generate_sample_data.py`）
 
-```bash
-python run_all.py
-```
+## 使い方
+1. 必要なパッケージをインストール
+2. データファイル（`restaurant_sales_data.csv`）を用意
+    - サンプルデータを使う場合：
+      ```bash
+      python generate_sample_data.py
+      ```
+3. メインスクリプトを実行
+    ```bash
+    python prophet_sales_forecast.py
+    ```
 
-これにより以下が実行されます：
-- サンプルデータの生成
-- データ分析と可視化
-- 各カテゴリのProphetモデル構築
-- 予測結果の出力
+## 予測モード（4パターン）
+スクリプト実行時、以下4つの予測が自動で順番に実行されます：
 
-## 📋 詳細な使用方法
+1. **[c1] RandomForestでカテゴリ別（3種）**
+2. **[c2] RandomForestで店舗別（3件）**
+3. **[c3] Prophetでカテゴリ別（3種）**
+4. **[c4] Prophetで店舗別（3件）**
 
-### 個別実行
+※テストモード時は各3カテゴリ・3店舗のみ。全件実行したい場合は`prophet_sales_forecast.py`内の`test_mode`引数を調整してください。
 
-#### サンプルデータ生成
-```bash
-python generate_sample_data.py
-```
+## 出力ファイル
+- `rf_cat_model_performance.csv`：カテゴリ別RandomForestの性能指標
+- `rf_cat_forecast_*.csv`：カテゴリ別RandomForestの未来12ヶ月予測
+- `rf_cat_forecast_*.png`：カテゴリ別RandomForestの予測グラフ
+- `rf_cat_feature_importance_*.png`：カテゴリ別RandomForestの特徴量重要度
+- `rf_cat_scatter_*.png`：カテゴリ別RandomForestの予測vs実測散布図
+- `rf_shop_model_performance.csv`：店舗別RandomForestの性能指標
+- `rf_shop_forecast_*.csv`：店舗別RandomForestの未来12ヶ月予測
+- `rf_shop_forecast_*.png`：店舗別RandomForestの予測グラフ
+- `rf_shop_feature_importance_*.png`：店舗別RandomForestの特徴量重要度
+- `rf_shop_scatter_*.png`：店舗別RandomForestの予測vs実測散布図
+- `cat_model_performance.csv`：カテゴリ別Prophetの性能指標
+- `cat_forecast_*.csv`：カテゴリ別Prophetの未来12ヶ月予測
+- `cat_forecast_*.png`：カテゴリ別Prophetの予測グラフ
+- `cat_components_*.png`：カテゴリ別Prophetの分解図
+- `cat_trend_*.png`：カテゴリ別Prophetのトレンド
+- `cat_seasonality_*.png`：カテゴリ別Prophetの季節性
+- `shop_model_performance.csv`：店舗別Prophetの性能指標
+- `shop_forecast_*.csv`：店舗別Prophetの未来12ヶ月予測
 
-#### データ分析
-```bash
-python data_analysis.py
-```
+## カスタマイズ方法
+- 予測対象カテゴリや店舗数を増やしたい場合は、`prophet_sales_forecast.py`の`test_mode`引数を`False`に変更してください。
+- 特徴量の追加や前処理のカスタマイズも`prophet_sales_forecast.py`内で柔軟に編集可能です。
+- 予測期間やラグ数も引数で調整できます。
 
-#### 予測モデル実行
-```bash
-python prophet_sales_forecast.py
-```
+## トラブルシューティング
+- **matplotlibのエラーが出る場合**：バックエンドは`Agg`に設定済みですが、エラーが出る場合は`matplotlib.use('Agg')`の位置を確認してください。
+- **データが足りない場合**：十分な月数のデータがないとモデルが学習できません。
+- **Prophetのインストールエラー**：`cmdstanpy`や`pystan`の依存関係に注意してください。
 
-## 📊 出力ファイル
-
-### 分析結果
-- `sales_trends_analysis.png`: 売上トレンド分析
-- `feature_analysis.png`: 特徴量分析
-- `correlation_matrix.png`: 相関分析
-- `seasonal_analysis.png`: 季節性分析
-
-### 予測結果
-- `forecast_[カテゴリ].png`: 各カテゴリの予測グラフ
-- `components_[カテゴリ].png`: 予測成分分解（トレンド・季節性）
-- `forecast_[カテゴリ].csv`: 各カテゴリの予測データ
-- `model_performance.csv`: モデル性能指標
-
-## ⚙️ モデル設定
-
-### Prophet設定
-- **年次季節性**: 有効（12ヶ月周期）
-- **週次季節性**: 無効
-- **日次季節性**: 無効
-- **季節性モード**: 乗法的
-- **回帰変数**: 人流、評価スコア、評価数、席数
-
-### 性能指標
-- **MAE**: 平均絶対誤差
-- **RMSE**: 平均二乗誤差の平方根
-- **R²**: 決定係数
-- **MAPE**: 平均絶対パーセンテージ誤差
-
-## 🎯 カスタマイズ
-
-### 新しいカテゴリの追加
-`generate_sample_data.py`の`categories`リストに新しいカテゴリを追加：
-
-```python
-categories = ['イタリアン', '中華', '和食', 'フレンチ', 'カフェ', '新カテゴリ']
-```
-
-### 回帰変数の変更
-`prophet_sales_forecast.py`の`regressors`リストを編集：
-
-```python
-regressors = ['AVG_MONTHLY_POPULATION', 'RATING_SCORE', 'RATING_CNT', 'NUM_SEATS']
-```
-
-### 予測期間の変更
-`train_models`メソッド内の`periods`パラメータを変更：
-
-```python
-future = model.make_future_dataframe(periods=12)  # 12ヶ月先まで予測
-```
-
-## 🔧 トラブルシューティング
-
-### Prophetのインストールエラー
-```bash
-# Windowsの場合
-conda install -c conda-forge prophet
-
-# または
-pip install prophet --no-cache-dir
-```
-
-### 日本語文字化け
-- `font_setup.py`が自動的に日本語フォントを設定します
-- 問題が続く場合は、システムに日本語フォントがインストールされているか確認してください
-
-### メモリ不足エラー
-- データサイズを小さくする
-- カテゴリ数を減らす
-- 予測期間を短くする
-
-## 📝 注意事項
-
-- Prophetのインストールには時間がかかる場合があります
-- 大量のデータを扱う場合は、メモリ使用量に注意してください
-- 予測精度はデータの質と量に大きく依存します
-- 日本語フォントの設定により、グラフの文字化けを防いでいます
-
-## 🤝 貢献
-
-バグ報告や機能要望は、GitHubのIssueでお知らせください。
-
-## 📄 ライセンス
-
-このプロジェクトはMITライセンスの下で公開されています。
+## ライセンス
+- 本プロジェクトはMITライセンスです。
 
 ---
 
-**開発者**: [Your Name]  
-**最終更新**: 2024年12月
+ご質問・ご要望はIssueまたはPull Requestでお気軽にどうぞ！
